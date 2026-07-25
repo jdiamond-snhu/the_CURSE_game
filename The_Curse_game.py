@@ -1,14 +1,14 @@
 import streamlit as st
 
-# Configure canvas framework for an immersive visual experience
+# Configure canvas framework 
 st.set_page_config(page_title="Tomb of the Unspoken", layout="wide")
 
 # 1. Initialize Game State Metrics
 if "scene" not in st.session_state:
     st.session_state.scene = "entrance"
     st.session_state.curse = 0          # Ranges from 0 to 100
-    st.session_state.knowledge = []     # Tracks discovered lore items
-    st.session_state.powers = []        # Tracks unlocked supernatural traits
+    st.session_state.knowledge = []     
+    st.session_state.powers = []        
 
 # 2. Sidebar Settings & Diagnostics Panel
 with st.sidebar:
@@ -76,72 +76,79 @@ STORY = {
     }
 }
 
-# 4. Generate Centered Perimeter Grid Data
+# 4. Generate Symmetrical Hieroglyph Placements
 HIEROGLYPH_BANK = ["𓁹", "𓃠", "𓆗", "𓅃", "𓀾", "𓋹", "𓎬", "𓆣", "𓇳", "𓆙", "𓁶", "𓃓", "𓅓", "𓎛", "𓏢", "𓆏"]
 TOTAL_BORDER_SLOTS = 16
 
-# Determine how many total slots should reveal symbols based on current curse percentage
+# Determine how many slots to activate based on curse percent
 active_slots_count = int((st.session_state.curse / 100) * TOTAL_BORDER_SLOTS)
-
-# Ensure at least 1 glyph illuminates if knowledge has been acquired
 if st.session_state.knowledge and active_slots_count == 0:
     active_slots_count = 1
 
-# Define priority layout maps for each side growing outwards from the exact centers
-# Map layout numbers to specific slots: Top (T), Bottom (B), Left (L), Right (R)
+# Symmetrical growth sequence beginning exactly at the center offsets
 activation_priority = [
-    "T3", "B3", "L2", "R2",  # Generation 1: True centers of each of the four walls
-    "T2", "T4", "B2", "B4",  # Generation 2: Spreading outward on top and bottom
-    "L1", "L3", "R1", "R3",  # Generation 3: Spreading outward on left and right walls
-    "T1", "T5", "B1", "B5"   # Generation 4: Corner-adjacent slots completing the frame
+    "t3", "b3", "l2", "r2",  # Generation 1: True Center of all 4 borders
+    "t2", "t4", "b2", "b4",  # Generation 2: Spreading horizontally outwards
+    "l1", "l3", "r1", "r3",  # Generation 3: Spreading vertically outwards
+    "t1", "t5", "b1", "b5"   # Generation 4: Completing the outer bounds
 ]
-
-# Track which slots are currently active
 active_slots_set = set(activation_priority[:active_slots_count])
 
-def render_slot(slot_id, glyph_index):
-    """Helper to return active or empty slot html structures"""
+def make_glyph_html(slot_id, inline_css_coords, bank_idx):
+    """Generates individual layered glyph element absolute markup strings"""
     if slot_id in active_slots_set:
-        glyph = HIEROGLYPH_BANK[glyph_index % len(HIEROGLYPH_BANK)]
-        return f'<div class="glyph-slot active-glyph">{glyph}</div>'
+        glyph = HIEROGLYPH_BANK[bank_idx % len(HIEROGLYPH_BANK)]
+        return f'<div class="glyph-slot active-glyph" style="{inline_css_coords}">{glyph}</div>'
     else:
-        return '<div class="glyph-slot empty-slot"></div>'
+        return f'<div class="glyph-slot empty-slot" style="{inline_css_coords}"></div>'
 
-# Build mapping dictionary for every position in our 7x5 matrix framework
-slots = {
-    # Top wall slots (1 to 5)
-    "t1": render_slot("T1", 0), "t2": render_slot("T2", 1), "t3": render_slot("T3", 2), "t4": render_slot("T4", 3), "t5": render_slot("T5", 4),
-    # Left wall slots (1 to 3)
-    "l1": render_slot("L1", 5), "l2": render_slot("L2", 6), "l3": render_slot("L3", 7),
-    # Right wall slots (1 to 3)
-    "r1": render_slot("R1", 8), "r2": render_slot("R2", 9), "r3": render_slot("R3", 10),
-    # Bottom wall slots (1 to 5)
-    "b1": render_slot("B1", 11), "b2": render_slot("B2", 12), "b3": render_slot("B3", 13), "b4": render_slot("B4", 14), "b5": render_slot("B5", 15)
-}
-
-# 5. Inject Clean Structural Grid Layout CSS
+# 5. Build Layered Content Layout & Inject Absolute Position Styles
 custom_css = """
 <style>
-    .game-wrapper {
+    /* Absolute Positioning Core Engine Sandbox Wrapper */
+    .canvas-container {
+        position: relative;
+        width: 80%;               /* Takes up exactly 80% width layout screen */
+        float: left;              /* Flush Left alignment structural constraint */
+        background-color: #c2b280; /* Desert Sand Tan solid frame color */
+        padding: 200px;           /* Pushes interior contents in from frame bounds */
+        box-sizing: border-box;
+        border-radius: 12px;
+        min-height: 850px;
+    }
+
+    /* Central Core Screen Framework Container */
+    .viewport-screen {
+        background-color: #0f1115;
+        border: 4px solid #232731;
+        border-radius: 8px;
+        padding: 20px;
+        color: #f1f5f9;
+        width: 100%;
+        height: 450px;
         display: flex;
-        justify-content: center;
-        align-items: center;
-        margin: 0 auto;
-        max-width: 1000px;
-        padding-top: 10px;
+        flex-direction: column;
+        justify-content: space-between;
+        box-sizing: border-box;
     }
-    .game-grid-container {
-        display: grid;
-        grid-template-columns: repeat(7, 60px); /* Strict element widths */
-        grid-template-rows: repeat(5, 90px);   /* Strict element heights */
-        grid-gap: 12px;
-        background-color: #060708;
-        padding: 24px;
-        border-radius: 14px;
-        border: 1px solid #1a1f26;
-        justify-content: center;
+    .viewport-screen img {
+        width: 100%; 
+        border-radius: 6px; 
+        height: 270px; 
+        object-fit: cover; 
+        border-bottom: 2px solid #232731;
+        filter: grayscale(100%) contrast(140%) brightness(75%);
     }
+    .vn-text {
+        font-size: 1.1rem;
+        line-height: 1.5;
+        margin-top: 12px;
+    }
+
+    /* Layered Foreground Custom Elements (2" wide by 3" tall visual aspect equivalent) */
     .glyph-slot {
+        position: absolute;
+        z-index: 10;              /* Forces elements on top of sand background */
         display: flex;
         align-items: center;
         justify-content: center;
@@ -149,87 +156,62 @@ custom_css = """
         height: 90px;
         font-size: 2.2rem;
         border-radius: 6px;
+        transition: all 0.5s ease-in-out;
     }
     .empty-slot {
-        border: 2px dashed #1e222b;
-        background-color: #0b0d12;
+        border: 2px dashed rgba(30, 34, 43, 0.4);
+        background-color: rgba(11, 13, 18, 0.2);
     }
     .active-glyph {
         border: 2px solid #6b1111;
         background-color: #1f0707;
         color: #ff453a;
         text-shadow: 0px 0px 10px #ff453a;
+        box-shadow: 0px 4px 8px rgba(0,0,0,0.5);
     }
-    .viewport-screen {
-        grid-column: 2 / 7;
-        grid-row: 2 / 5;
-        background-color: #0f1115;
-        border: 2px solid #232731;
-        border-radius: 8px;
-        padding: 20px;
-        color: #f1f5f9;
-        display: flex;
-        flex-direction: column;
-        justify-content: space-between;
-        width: 100%;
-        height: 100%;
-        box-sizing: border-box;
-    }
-    .viewport-screen img {
-        width: 100%; 
-        border-radius: 6px; 
-        height: 160px; 
-        object-fit: cover; 
-        border-bottom: 2px solid #232731;
-        filter: grayscale(100%) contrast(140%) brightness(80%);
-    }
-    .vn-text {
-        font-size: 1rem;
-        line-height: 1.4;
-        margin-top: 8px;
-        overflow-y: auto;
+    
+    /* Clean layout formatting fix to isolate choices area properly */
+    .actions-block {
+        clear: both;
+        width: 80%;
+        padding-top: 24px;
     }
 </style>
 """
 st.markdown(custom_css, unsafe_allow_html=True)
 
-# 6. Render Structural Frame Structure 
+# 6. Render Stacking Layer Map Interface
 current_node = STORY.get(st.session_state.scene, STORY["entrance"])
 
-# Every grid cell is now explicitly wrapped in valid HTML elements to prevent layout collapses
-grid_html = f"""
-<div class="game-wrapper">
-    <div class="game-grid-container">
-        <!-- Row 1 -->
-        <div class="corner-space"></div>
-        {slots['t1']} {slots['t2']} {slots['t3']} {slots['t4']} {slots['t5']}
-        <div class="corner-space"></div>
-        
-        <!-- Row 2 -->
-        {slots['l1']}
-        <div class="viewport-screen">
-            <img src="{current_node['image']}">
-            <p class="vn-text">{current_node['text']}</p>
-        </div>
-        {slots['r1']}
-        
-        <!-- Row 3 -->
-        {slots['l2']}
-        <!-- Hidden underlying spacer to let the viewport take control of middle tracks -->
-        <div style="grid-column: 2 / 7; grid-row: 3 / 4; pointer-events: none;"></div>
-        {slots['r2']}
-        
-        <!-- Row 4 -->
-        {slots['l3']}
-        <div style="grid-column: 2 / 7; grid-row: 4 / 5; pointer-events: none;"></div>
-        {slots['r3']}
-        
-        <!-- Row 5 -->
-        <div class="corner-space"></div>
-        {slots['b1']} {slots['b2']} {slots['b3']} {slots['b4']} {slots['b5']}
-        <div class="corner-space"></div>
+# Absolute Coordinate Computations for 5 across top/bottom, 3 vertically on sides
+# Offsets map to center nicely within the 200px padding perimeter around the center block
+layer_markup = f"""
+<div class="canvas-container">
+    <!-- Centered Game Content Screen Viewport -->
+    <div class="viewport-screen">
+        <img src="{current_node['image']}">
+        <p class="vn-text">{current_node['text']}</p>
     </div>
-</div>
-"""
-st.markdown(grid_html, unsafe_allow_html=True)
-st.write(" ") 
+
+    <!-- Top Border Horizontal Chain (5 Items distributed across) -->
+    {make_glyph_html('t1', 'top: 55px; left: calc(20% + 0px);', 0)}
+    {make_glyph_html('t2', 'top: 55px; left: calc(20% + 110px);', 1)}
+    {make_glyph_html('t3', 'top: 55px; left: calc(50% - 30px);', 2)}   <!-- TRUE TOP CENTER -->
+    {make_glyph_html('t4', 'top: 55px; right: calc(20% + 110px);', 3)}
+    {make_glyph_html('t5', 'top: 55px; right: calc(20% + 0px);', 4)}
+
+    <!-- Bottom Border Horizontal Chain (5 Items distributed across) -->
+    {make_glyph_html('b1', 'bottom: 55px; left: calc(20% + 0px);', 5)}
+    {make_glyph_html('b2', 'bottom: 55px; left: calc(20% + 110px);', 6)}
+    {make_glyph_html('b3', 'bottom: 55px; bottom: 55px; left: calc(50% - 30px);', 7)} <!-- TRUE BOTTOM CENTER -->
+    {make_glyph_html('b4', 'bottom: 55px; right: calc(20% + 110px);', 8)}
+    {make_glyph_html('b5', 'bottom: 55px; right: calc(20% + 0px);', 9)}
+
+    <!-- Left Border Vertical Chain (3 Items stacked) -->
+    {make_glyph_html('l1', 'top: calc(20% + 40px); left: 70px;', 10)}
+    {make_glyph_html('l2', 'top: calc(50% - 45px); left: 70px;', 11)}  <!-- TRUE LEFT CENTER -->
+    {make_glyph_html('l3', 'bottom: calc(20% + 40px); left: 70px;', 12)}
+
+    <!-- Right Border Vertical Chain (3 Items stacked) -->
+    {make_glyph_html('r1', 'top: calc(20% + 40px); right: 70px;', 13)}
+    {make_glyph_html('r2', 'top: calc(50% - 45px); right: 70px;', 14)} <!-- TRUE RIGHT CENTER -->
