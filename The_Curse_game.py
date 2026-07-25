@@ -30,11 +30,11 @@ with st.sidebar:
         st.session_state.clear()
         st.rerun()
 
-# 3. Comprehensive Story Database
+# 3. Comprehensive Story Database with Public Domain Images
 STORY = {
     "entrance": {
         "text": "The sandstone slab seals behind you with a crushing echo. Total dark. Your flashlight cuts through ancient air heavy with dust and the scent of copper. Before you rests an altar carved with rhythmic, pulsing inscriptions.",
-        "image": "https://unsplash.com",
+        "image": "https://wikimedia.org",
         "choices": [
             {"text": "Ignore the altar and step blindly into the main corridor.", "next": "main_hall", "curse": 0, "get_knowledge": None, "get_power": None},
             {"text": "Translate the forbidden glyphs to understand where you are.", "next": "altar_read", "curse": 15, "get_knowledge": "Deity Lore", "get_power": "Third-Eye Vision"}
@@ -42,19 +42,17 @@ STORY = {
     },
     "altar_read": {
         "text": "The symbols burn into your retinas. You learn of Anubis-Set, a fused entity of cosmic decay. A sharp snap echoes inside your skull. Your vision shifts—you can now perceive a faint, heat-signature warmth emanating from organic objects in the dark.",
-        "image": "https://unsplash.com",
+        "image": "https://wikimedia.org",
         "choices": [
             {"text": "Clutch your throbbing head and stumble forward into the main corridor.", "next": "main_hall", "curse": 0, "get_knowledge": None, "get_power": None}
         ]
     },
     "main_hall": {
         "text": "You enter a vast, vaulted chamber. Suddenly, a clicking sound echoes overhead. A heavy stone trap door triggers, dropping down from the ceiling to seal your forward path completely. A standard human cannot lift this sandstone block.",
-        "image": "https://unsplash.com",
+        "image": "https://wikimedia.org",
         "choices": [
-            # This choice is always available, but leads to a dead end without powers
             {"text": "Throw your human shoulder against the stone block to force it open.", "next": "trap_fail", "curse": 5, "get_knowledge": None, "get_power": None}
         ],
-        # Conditional power choices will be appended dynamically below
         "power_choices": [
             {
                 "requires_power": "Third-Eye Vision",
@@ -68,142 +66,168 @@ STORY = {
     },
     "bypass_trap": {
         "text": "Your anomalies pierce the density of the rock, showing you a hidden pressure plate behind the masonry. You bypass the obstacle safely, but your muscle fibers tear and stitch back together as dense, fibrous black chitin. You are evolving.",
-        "image": "https://unsplash.com",
-        "choices": [] # Next story branches go here
+        "image": "https://wikimedia.org",
+        "choices": [] 
     },
     "trap_fail": {
         "text": "Your human bones fracture against the block. You are trapped in the dark as cold, wet breathing echoes from the shadows behind you.",
-        "image": "https://unsplash.com",
+        "image": "https://wikimedia.org",
         "choices": []
     }
 }
 
-# 4. Generate the Perimeter Matrix Data
-HIEROGLYPH_BANK = ["𓁹", "𓃠", "𓆗", "𓅃", "𓀾", "𓋹", "𓎬", "𓆣", "𓇳", "𓆙", "𓁶", "𓃓"]
-TOTAL_BORDER_SLOTS = 20  # 6 top, 6 bottom, 4 left, 4 right
+# 4. Generate Perimeter Matrix Data (16 Total Perimeter Slots)
+HIEROGLYPH_BANK = ["𓁹", "𓃠", "𓆗", "𓅃", "𓀾", "𓋹", "𓎬", "𓆣", "𓇳", "𓆙", "𓁶", "𓃓", "𓅓", "𓎛", "𓏢", "𓆏"]
+TOTAL_BORDER_SLOTS = 16
 
 # Calculate active cells dynamically based on curse progress
 active_slots_count = int((st.session_state.curse / 100) * TOTAL_BORDER_SLOTS)
 
-# Ensure that if they have gained knowledge but math rounds slots to 0, at least 1 shows up
+# Ensure at least 1 glyph illuminates if knowledge has been acquired
 if st.session_state.knowledge and active_slots_count == 0:
     active_slots_count = 1
 
-# Compile HTML string array for building the border frame layout
-border_cells = []
-for i in range(TOTAL_BORDER_SLOTS):
-    if i < active_slots_count:
-        glyph = HIEROGLYPH_BANK[i % len(HIEROGLYPH_BANK)]
-        border_cells.append(f'<div class="glyph-slot active-glyph">{glyph}</div>')
+# Pre-populate glyph items dictionary for precise grid generation mapping
+slots = {}
+for i in range(1, TOTAL_BORDER_SLOTS + 1):
+    if i <= active_slots_count:
+        glyph = HIEROGLYPH_BANK[(i - 1) % len(HIEROGLYPH_BANK)]
+        slots[f"s{i}"] = f'<div class="glyph-slot active-glyph">{glyph}</div>'
     else:
-        border_cells.append('<div class="glyph-slot empty-slot"></div>')
+        slots[f"s{i}"] = '<div class="glyph-slot empty-slot"></div>'
 
 # 5. Inject Custom Structural Layout Layout & CSS UI Engine
-custom_css = f"""
+custom_css = """
 <style>
-    .game-grid-container {{
-        display: grid;
-        grid-template-columns: repeat(6, 1fr);
-        grid-gap: 10px;
-        background-color: #060708;
-        padding: 20px;
-        border-radius: 14px;
-        max-width: 950px;
+    /* Centers the overall visual novel container on screen */
+    .game-wrapper {
+        display: flex;
+        justify-content: center;
+        align-items: center;
         margin: 0 auto;
+        max-width: 1000px;
+        padding-top: 10px;
+    }
+
+    /* 7x5 Grid Matrix Layout targeting your requested side counts */
+    .game-grid-container {
+        display: grid;
+        grid-template-columns: repeat(7, auto);
+        grid-gap: 12px;
+        background-color: #060708;
+        padding: 24px;
+        border-radius: 14px;
         border: 1px solid #1a1f26;
-    }}
-    .glyph-slot {{
+        align-items: center;
+        justify-content: center;
+    }
+
+    /* Custom 2" width by 3" height visual ratio styling per block */
+    .glyph-slot {
         display: flex;
         align-items: center;
         justify-content: center;
-        aspect-ratio: 1 / 1;
-        font-size: 2rem;
+        width: 60px;
+        height: 90px;
+        font-size: 2.2rem;
         border-radius: 6px;
         transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
-    }}
-    .empty-slot {{
+    }
+    .empty-slot {
         border: 2px dashed #1e222b;
         background-color: #0b0d12;
-    }}
-    .active-glyph {{
+    }
+    .active-glyph {
         border: 2px solid #6b1111;
         background-color: #1f0707;
         color: #ff453a;
         text-shadow: 0px 0px 10px #ff453a;
         box-shadow: inset 0 0 12px rgba(255,69,58,0.15);
-    }}
-    .viewport-screen {{
-        grid-column: 2 / 6;
+    }
+
+    /* Central Viewport Screen encompassing the 5x3 internal zone */
+    .viewport-screen {
+        grid-column: 2 / 7;
         grid-row: 2 / 5;
         background-color: #0f1115;
         border: 2px solid #232731;
         border-radius: 8px;
-        padding: 24px;
+        padding: 20px;
         color: #f1f5f9;
-    }}
-    .vn-text {{
-        font-size: 1.2rem;
-        line-height: 1.65;
-        margin-top: 18px;
-    }}
+        width: 600px;
+        height: 410px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+    }
+    .viewport-screen img {
+        width: 100%; 
+        border-radius: 6px; 
+        height: 240px; 
+        object-fit: cover; 
+        border-bottom: 2px solid #232731;
+        filter: grayscale(100%) contrast(140%) brightness(80%);
+    }
+    .vn-text {
+        font-size: 1.1rem;
+        line-height: 1.5;
+        margin-top: 10px;
+        overflow-y: auto;
+    }
 </style>
 """
 st.markdown(custom_css, unsafe_allow_html=True)
 
-# 6. Render Layout Map Structure
+# 6. Render Structural Frame Structure 
 current_node = STORY.get(st.session_state.scene, STORY["entrance"])
 
-# Construct complete perimeter mapping manually for pixel-perfect slot positioning
+# Re-assembled layout map creating perfect side slot counts (5 top/bottom, 3 left/right)
 grid_html = f"""
-<div class="game-grid-container">
-    <!-- Top Row Boundary Frame (Slots 0 - 5) -->
-    {border_cells[0]}{border_cells[1]}{border_cells[2]}{border_cells[3]}{border_cells[4]}{border_cells[5]}
-    
-    <!-- Row 2 Frame Layout -->
-    {border_cells[19]}
-    <div class="viewport-screen">
-        <img src="{current_node['image']}" style="width:100%; border-radius:6px; max-height:320px; object-fit:cover; border-bottom: 2px solid #232731;">
-        <p class="vn-text">{current_node['text']}</p>
+<div class="game-wrapper">
+    <div class="game-grid-container">
+        <!-- Top Perimeter Boundary Row (5 Slots spanning columns 2 through 6) -->
+        <div></div> {slots['s1']} {slots['s2']} {slots['s3']} {slots['s4']} {slots['s5']} <div></div>
+        
+        <!-- Interior Row 1 Framework Layout -->
+        {slots['s14']}
+        <div class="viewport-screen">
+            <img src="{current_node['image']}">
+            <p class="vn-text">{current_node['text']}</p>
+        </div>
+        {slots['s6']}
+        
+        <!-- Interior Row 2 Framework Layout -->
+        {slots['s13']} {slots['s7']}
+        
+        <!-- Interior Row 3 Framework Layout -->
+        {slots['s12']} {slots['s8']}
+        
+        <!-- Bottom Perimeter Boundary Row (5 Slots spanning columns 2 through 6) -->
+        <div></div> {slots['s11']} {slots['s10']} {slots['s9']} {slots['s15']} {slots['s16']} <div></div>
     </div>
-    {border_cells[6]}
-    
-    <!-- Row 3 Frame Layout -->
-    {border_cells[18]}
-    {border_cells[7]}
-    
-    <!-- Row 4 Frame Layout -->
-    {border_cells[17]}
-    {border_cells[8]}
-    
-    <!-- Bottom Row Boundary Frame (Slots 11 - 16) -->
-    {border_cells[16]}{border_cells[15]}{border_cells[14]}{border_cells[13]}{border_cells[12]}{border_cells[11]}
 </div>
 """
 st.markdown(grid_html, unsafe_allow_html=True)
 st.write(" ") 
 
 # 7. Dynamic Action Button Input Processing
-# Extract active options configuration list
 available_choices = list(current_node["choices"])
 
-# Inject conditional hidden powers routes dynamically if requirements are met
 if "power_choices" in current_node:
     for p_choice in current_node["power_choices"]:
         if p_choice["requires_power"] in st.session_state.powers:
             available_choices.append(p_choice)
 
-# Render choice buttons
 if available_choices:
-    cols = st.columns(len(available_choices))
-    for index, choice in enumerate(available_choices):
-        with cols[index]:
-            # Highlight special supernatural actions visually using button labels
+    # Anchor the choice options directly beneath our centered canvas box wrapper
+    col_spacer_left, col_content, col_spacer_right = st.columns([1, 2, 1])
+    with col_content:
+        for index, choice in enumerate(available_choices):
             label = choice["text"]
             if "requires_power" in choice:
                 label = f"👁️ [MUTATED CHOICE] {label}"
                 
             if st.button(label, key=f"act_{index}", use_container_width=True):
-                # Update core states on click
                 st.session_state.scene = choice["next"]
                 st.session_state.curse = min(100, st.session_state.curse + choice["curse"])
                 
@@ -214,12 +238,4 @@ if available_choices:
                     
                 st.rerun()
 else:
-    # Terminal State Catch Block
-    if st.session_state.curse >= 100:
-        st.error("### Complete Apotheosis: You belong to the tomb now.")
-    else:
-        st.warning("### Fatal End: Lost eternally within the shifting walls.")
-        
-    if st.button("Awaken back at the threshold (Restart Game)", use_container_width=True):
-        st.session_state.clear()
-        st.rerun()
+    col_spacer_left, col_content, col_spacer_right = st.columns([1, 2, 1])
