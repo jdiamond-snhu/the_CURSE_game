@@ -37,7 +37,7 @@ STORY = {
         "image": "https://wikimedia.org",
         "choices": [
             {"text": "Ignore the altar and step blindly into the main corridor.", "next": "main_hall", "curse": 0, "get_knowledge": None, "get_power": None},
-            {"text": "Translate the forbidden glyphs to understand where you are.", "next": "altar_read", "curse": 15, "get_knowledge": "Deity Lore", "get_power": "Third-Eye Vision"}
+            {"text": "Translate the forbidden glyphs to understand where you are.", "next": "altar_read", "curse": 20, "get_knowledge": "Deity Lore", "get_power": "Third-Eye Vision"}
         ]
     },
     "altar_read": {
@@ -58,7 +58,7 @@ STORY = {
                 "requires_power": "Third-Eye Vision",
                 "text": "Use your Third-Eye Vision to look through the solid stone for an alternate mechanisms layout.",
                 "next": "bypass_trap",
-                "curse": 20,
+                "curse": 25,
                 "get_knowledge": "Tomb Structural Flow",
                 "get_power": "Chitinous Muscle Reshaping"
             }
@@ -76,25 +76,48 @@ STORY = {
     }
 }
 
-# 4. Generate Perimeter Matrix Data (16 Total Perimeter Slots)
+# 4. Generate Centered Perimeter Grid Data
 HIEROGLYPH_BANK = ["𓁹", "𓃠", "𓆗", "𓅃", "𓀾", "𓋹", "𓎬", "𓆣", "𓇳", "𓆙", "𓁶", "𓃓", "𓅓", "𓎛", "𓏢", "𓆏"]
 TOTAL_BORDER_SLOTS = 16
 
-# Calculate active cells dynamically based on curse progress
+# Determine how many total slots should reveal symbols based on current curse percentage
 active_slots_count = int((st.session_state.curse / 100) * TOTAL_BORDER_SLOTS)
 
 # Ensure at least 1 glyph illuminates if knowledge has been acquired
 if st.session_state.knowledge and active_slots_count == 0:
     active_slots_count = 1
 
-# Pre-populate glyph items dictionary for precise grid generation mapping
-slots = {}
-for i in range(1, TOTAL_BORDER_SLOTS + 1):
-    if i <= active_slots_count:
-        glyph = HIEROGLYPH_BANK[(i - 1) % len(HIEROGLYPH_BANK)]
-        slots[f"s{i}"] = f'<div class="glyph-slot active-glyph">{glyph}</div>'
+# Define priority layout maps for each side growing outwards from the exact centers
+# Map layout numbers to specific slots: Top (T), Bottom (B), Left (L), Right (R)
+activation_priority = [
+    "T3", "B3", "L2", "R2",  # Generation 1: True centers of each of the four walls
+    "T2", "T4", "B2", "B4",  # Generation 2: Spreading outward on top and bottom
+    "L1", "L3", "R1", "R3",  # Generation 3: Spreading outward on left and right walls
+    "T1", "T5", "B1", "B5"   # Generation 4: Corner-adjacent slots completing the frame
+]
+
+# Track which slots are currently active
+active_slots_set = set(activation_priority[:active_slots_count])
+
+def render_slot(slot_id, glyph_index):
+    """Helper to return active or empty slot html structures"""
+    if slot_id in active_slots_set:
+        glyph = HIEROGLYPH_BANK[glyph_index % len(HIEROGLYPH_BANK)]
+        return f'<div class="glyph-slot active-glyph">{glyph}</div>'
     else:
-        slots[f"s{i}"] = '<div class="glyph-slot empty-slot"></div>'
+        return '<div class="glyph-slot empty-slot"></div>'
+
+# Build mapping dictionary for every position in our 7x5 matrix framework
+slots = {
+    # Top wall slots (1 to 5)
+    "t1": render_slot("T1", 0), "t2": render_slot("T2", 1), "t3": render_slot("T3", 2), "t4": render_slot("T4", 3), "t5": render_slot("T5", 4),
+    # Left wall slots (1 to 3)
+    "l1": render_slot("L1", 5), "l2": render_slot("L2", 6), "l3": render_slot("L3", 7),
+    # Right wall slots (1 to 3)
+    "r1": render_slot("R1", 8), "r2": render_slot("R2", 9), "r3": render_slot("R3", 10),
+    # Bottom wall slots (1 to 5)
+    "b1": render_slot("B1", 11), "b2": render_slot("B2", 12), "b3": render_slot("B3", 13), "b4": render_slot("B4", 14), "b5": render_slot("B5", 15)
+}
 
 # 5. Inject Custom Structural Layout Layout & CSS UI Engine
 custom_css = """
@@ -181,61 +204,29 @@ st.markdown(custom_css, unsafe_allow_html=True)
 # 6. Render Structural Frame Structure 
 current_node = STORY.get(st.session_state.scene, STORY["entrance"])
 
-# Re-assembled layout map creating perfect side slot counts (5 top/bottom, 3 left/right)
+# Grid coordinates mapping the 7 columns explicitly to retain empty corner spaces
 grid_html = f"""
 <div class="game-wrapper">
     <div class="game-grid-container">
-        <!-- Top Perimeter Boundary Row (5 Slots spanning columns 2 through 6) -->
-        <div></div> {slots['s1']} {slots['s2']} {slots['s3']} {slots['s4']} {slots['s5']} <div></div>
+        <!-- Row 1: Top Border Frame (5 across, padded by empty corners) -->
+        <div></div> {slots['t1']} {slots['t2']} {slots['t3']} {slots['t4']} {slots['t5']} <div></div>
         
-        <!-- Interior Row 1 Framework Layout -->
-        {slots['s14']}
+        <!-- Row 2: Contains Left Wall Slot 1, Viewport View Screen, and Right Wall Slot 1 -->
+        {slots['l1']}
         <div class="viewport-screen">
             <img src="{current_node['image']}">
             <p class="vn-text">{current_node['text']}</p>
         </div>
-        {slots['s6']}
+        {slots['r1']}
         
-        <!-- Interior Row 2 Framework Layout -->
-        {slots['s13']} {slots['s7']}
+        <!-- Row 3: Left Wall Center (L2) and Right Wall Center (R2) -->
+        {slots['l2']} {slots['r2']}
         
-        <!-- Interior Row 3 Framework Layout -->
-        {slots['s12']} {slots['s8']}
+        <!-- Row 4: Left Wall Bottom (L3) and Right Wall Bottom (R3) -->
+        {slots['l3']} {slots['r3']}
         
-        <!-- Bottom Perimeter Boundary Row (5 Slots spanning columns 2 through 6) -->
-        <div></div> {slots['s11']} {slots['s10']} {slots['s9']} {slots['s15']} {slots['s16']} <div></div>
+        <!-- Row 5: Bottom Border Frame (5 across, padded by empty corners) -->
+        <div></div> {slots['b1']} {slots['b2']} {slots['b3']} {slots['b4']} {slots['b5']} <div></div>
     </div>
 </div>
 """
-st.markdown(grid_html, unsafe_allow_html=True)
-st.write(" ") 
-
-# 7. Dynamic Action Button Input Processing
-available_choices = list(current_node["choices"])
-
-if "power_choices" in current_node:
-    for p_choice in current_node["power_choices"]:
-        if p_choice["requires_power"] in st.session_state.powers:
-            available_choices.append(p_choice)
-
-if available_choices:
-    # Anchor the choice options directly beneath our centered canvas box wrapper
-    col_spacer_left, col_content, col_spacer_right = st.columns([1, 2, 1])
-    with col_content:
-        for index, choice in enumerate(available_choices):
-            label = choice["text"]
-            if "requires_power" in choice:
-                label = f"👁️ [MUTATED CHOICE] {label}"
-                
-            if st.button(label, key=f"act_{index}", use_container_width=True):
-                st.session_state.scene = choice["next"]
-                st.session_state.curse = min(100, st.session_state.curse + choice["curse"])
-                
-                if choice["get_knowledge"]:
-                    st.session_state.knowledge.append(choice["get_knowledge"])
-                if choice["get_power"]:
-                    st.session_state.powers.append(choice["get_power"])
-                    
-                st.rerun()
-else:
-    col_spacer_left, col_content, col_spacer_right = st.columns([1, 2, 1])
