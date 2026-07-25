@@ -102,30 +102,30 @@ def make_glyph_html(slot_id, inline_css_coords, bank_idx):
     else:
         return f'<div class="glyph-slot empty-slot" style="{inline_css_coords}"></div>'
 
-# 5. Build Layered Content Layout & Inject Absolute Position Styles
+# 5. Inject Scaled Custom Layout & CSS UI Engine (Scaled to 70%)
 custom_css = """
 <style>
-    /* Absolute Positioning Core Engine Sandbox Wrapper */
+    /* Absolute Positioning Sandbox Wrapper (Scaled to 70%) */
     .canvas-container {
         position: relative;
-        width: 80%;               /* Takes up exactly 80% width layout screen */
-        float: left;              /* Flush Left alignment structural constraint */
-        background-color: #c2b280; /* Desert Sand Tan solid frame color */
-        padding: 200px;           /* Pushes interior contents in from frame bounds */
+        width: 56%;                /* 70% of previous 80% screen width constraint */
+        float: left;               /* Flush Left alignment */
+        background-color: #c2b280;  /* Desert Sand Tan solid frame color */
+        padding: 140px;            /* Scaled down from 200px padding perimeter */
         box-sizing: border-box;
         border-radius: 12px;
-        min-height: 850px;
+        min-height: 595px;         /* Scaled down from 850px height */
     }
 
-    /* Central Core Screen Framework Container */
+    /* Central Core Screen Framework Container (Scaled to 70%) */
     .viewport-screen {
         background-color: #0f1115;
-        border: 4px solid #232731;
+        border: 3px solid #232731;
         border-radius: 8px;
-        padding: 20px;
+        padding: 14px;
         color: #f1f5f9;
         width: 100%;
-        height: 450px;
+        height: 315px;             /* Scaled down from 450px height */
         display: flex;
         flex-direction: column;
         justify-content: space-between;
@@ -134,28 +134,28 @@ custom_css = """
     .viewport-screen img {
         width: 100%; 
         border-radius: 6px; 
-        height: 270px; 
+        height: 189px;             /* Scaled down from 270px height */
         object-fit: cover; 
         border-bottom: 2px solid #232731;
         filter: grayscale(100%) contrast(140%) brightness(75%);
     }
     .vn-text {
-        font-size: 1.1rem;
-        line-height: 1.5;
-        margin-top: 12px;
+        font-size: 0.95rem;        /* Marginally smaller text for compact layout */
+        line-height: 1.4;
+        margin-top: 8px;
     }
 
-    /* Layered Foreground Custom Elements (2" wide by 3" tall visual aspect equivalent) */
+    /* Foreground Elements (Maintained 2"x3" structural box equivalency) */
     .glyph-slot {
         position: absolute;
-        z-index: 10;              /* Forces elements on top of sand background */
+        z-index: 10;               /* Layer directly on top of the sand background */
         display: flex;
         align-items: center;
         justify-content: center;
-        width: 60px;
-        height: 90px;
-        font-size: 2.2rem;
-        border-radius: 6px;
+        width: 42px;               /* Width scaled to 70% of 60px */
+        height: 63px;              /* Height scaled to 70% of 90px */
+        font-size: 1.54rem;        /* Font size scaled to 70% of 2.2rem */
+        border-radius: 4px;
         transition: all 0.5s ease-in-out;
     }
     .empty-slot {
@@ -166,24 +166,24 @@ custom_css = """
         border: 2px solid #6b1111;
         background-color: #1f0707;
         color: #ff453a;
-        text-shadow: 0px 0px 10px #ff453a;
-        box-shadow: 0px 4px 8px rgba(0,0,0,0.5);
+        text-shadow: 0px 0px 8px #ff453a;
+        box-shadow: 0px 3px 6px rgba(0,0,0,0.5);
     }
     
-    /* Clean layout formatting fix to isolate choices area properly */
+    /* Formatting barrier layout rule */
     .actions-block {
         clear: both;
-        width: 80%;
-        padding-top: 24px;
+        width: 56%;                /* Matches the scaled canvas wrapper width */
+        padding-top: 18px;
     }
 </style>
 """
 st.markdown(custom_css, unsafe_allow_html=True)
 
-# 6. Render Stacking Layer Map Interface (Sanitized)
+# 6. Render Stacking Layer Map Interface (Coordinates scaled to 70%)
 current_node = STORY.get(st.session_state.scene, STORY["entrance"])
 
-# Removed all internal HTML comments and unified the bottom center layout coordinate injection
+# Every absolute positioning calculation has been adjusted down by 30% to fit the tighter perimeter 
 layer_markup = f"""
 <div class="canvas-container">
     <div class="viewport-screen">
@@ -191,25 +191,25 @@ layer_markup = f"""
         <p class="vn-text">{current_node['text']}</p>
     </div>
 
-    {make_glyph_html('t1', 'top: 55px; left: calc(20% + 0px);', 0)}
-    {make_glyph_html('t2', 'top: 55px; left: calc(20% + 110px);', 1)}
-    {make_glyph_html('t3', 'top: 55px; left: calc(50% - 30px);', 2)}
-    {make_glyph_html('t4', 'top: 55px; right: calc(20% + 110px);', 3)}
-    {make_glyph_html('t5', 'top: 55px; right: calc(20% + 0px);', 4)}
+    {make_glyph_html('t1', 'top: 38px; left: calc(20% + 0px);', 0)}
+    {make_glyph_html('t2', 'top: 38px; left: calc(20% + 77px);', 1)}
+    {make_glyph_html('t3', 'top: 38px; left: calc(50% - 21px);', 2)}
+    {make_glyph_html('t4', 'top: 38px; right: calc(20% + 77px);', 3)}
+    {make_glyph_html('t5', 'top: 38px; right: calc(20% + 0px);', 4)}
 
-    {make_glyph_html('b1', 'bottom: 55px; left: calc(20% + 0px);', 5)}
-    {make_glyph_html('b2', 'bottom: 55px; left: calc(20% + 110px);', 6)}
-    {make_glyph_html('b3', 'bottom: 55px; left: calc(50% - 30px);', 7)}
-    {make_glyph_html('b4', 'bottom: 55px; right: calc(20% + 110px);', 8)}
-    {make_glyph_html('b5', 'bottom: 55px; right: calc(20% + 0px);', 9)}
+    {make_glyph_html('b1', 'bottom: 38px; left: calc(20% + 0px);', 5)}
+    {make_glyph_html('b2', 'bottom: 38px; left: calc(20% + 77px);', 6)}
+    {make_glyph_html('b3', 'bottom: 38px; left: calc(50% - 21px);', 7)}
+    {make_glyph_html('b4', 'bottom: 38px; right: calc(20% + 77px);', 8)}
+    {make_glyph_html('b5', 'bottom: 38px; right: calc(20% + 0px);', 9)}
 
-    {make_glyph_html('l1', 'top: calc(20% + 40px); left: 70px;', 10)}
-    {make_glyph_html('l2', 'top: calc(50% - 45px); left: 70px;', 11)}
-    {make_glyph_html('l3', 'bottom: calc(20% + 40px); left: 70px;', 12)}
+    {make_glyph_html('l1', 'top: calc(20% + 28px); left: 49px;', 10)}
+    {make_glyph_html('l2', 'top: calc(50% - 31px); left: 49px;', 11)}
+    {make_glyph_html('l3', 'bottom: calc(20% + 28px); left: 49px;', 12)}
 
-    {make_glyph_html('r1', 'top: calc(20% + 40px); right: 70px;', 13)}
-    {make_glyph_html('r2', 'top: calc(50% - 45px); right: 70px;', 14)}
-    {make_glyph_html('r3', 'bottom: calc(20% + 40px); right: 70px;', 15)}
+    {make_glyph_html('r1', 'top: calc(20% + 28px); right: 49px;', 13)}
+    {make_glyph_html('r2', 'top: calc(50% - 31px); right: 49px;', 14)}
+    {make_glyph_html('r3', 'bottom: calc(20% + 28px); right: 49px;', 15)}
 </div>
 """
 st.markdown(layer_markup, unsafe_allow_html=True)
