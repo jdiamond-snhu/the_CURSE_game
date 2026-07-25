@@ -214,7 +214,7 @@ layer_markup = f"""
 """
 st.markdown(layer_markup, unsafe_allow_html=True)
 
-# 7. Action Processing Layer Input (Aligned to Bottom Edge of Frame)
+# 7. Action Processing Layer Input (Side-by-Side Under the Frame)
 available_choices = list(current_node["choices"])
 
 if "power_choices" in current_node:
@@ -222,27 +222,29 @@ if "power_choices" in current_node:
         if p_choice["requires_power"] in st.session_state.powers:
             available_choices.append(p_choice)
 
-# Inject target wrapper to cleanly anchor layout width definitions
 st.markdown('<div class="actions-block">', unsafe_allow_html=True)
 
 if available_choices:
-    # Use vertical layouts to cleanly line up action strings without text-wrapping issues
+    # Dynamically generate equal-width columns matching the number of available choices
+    cols = st.columns(len(available_choices))
+    
     for index, choice in enumerate(available_choices):
-        label = choice["text"]
-        if "requires_power" in choice:
-            label = f"👁️ [MUTATED CHOICE] {label}"
-            
-        # Renders full-width single stack buttons bounded cleanly inside the 56% action block width
-        if st.button(label, key=f"act_{index}", use_container_width=True):
-            st.session_state.scene = choice["next"]
-            st.session_state.curse = min(100, st.session_state.curse + choice["curse"])
-            
-            if choice["get_knowledge"]:
-                st.session_state.knowledge.append(choice["get_knowledge"])
-            if choice["get_power"]:
-                st.session_state.powers.append(choice["get_power"])
+        with cols[index]:
+            label = choice["text"]
+            if "requires_power" in choice:
+                label = f"👁️ {label}"
                 
-            st.rerun()
+            # Renders individual buttons side-by-side, bounded inside the 56% wide action block
+            if st.button(label, key=f"act_{index}", use_container_width=True):
+                st.session_state.scene = choice["next"]
+                st.session_state.curse = min(100, st.session_state.curse + choice["curse"])
+                
+                if choice["get_knowledge"]:
+                    st.session_state.knowledge.append(choice["get_knowledge"])
+                if choice["get_power"]:
+                    st.session_state.powers.append(choice["get_power"])
+                    
+                st.rerun()
 else:
     if st.session_state.curse >= 100:
         st.error("### Complete Apotheosis: You belong to the tomb now.")
