@@ -215,3 +215,5 @@ layer_markup = f"""
     <!-- Right Border Vertical Chain (3 Items stacked) -->
     {make_glyph_html('r1', 'top: calc(20% + 40px); right: 70px;', 13)}
     {make_glyph_html('r2', 'top: calc(50% - 45px); right: 70px;', 14)} <!-- TRUE RIGHT CENTER -->
+    {make_glyph_html('r3', 'bottom: calc(20% + 40px); right: 70px;', 15)}"""
+    st.markdown(layer_markup, unsafe_allow_html=True)
