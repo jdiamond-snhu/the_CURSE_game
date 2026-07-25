@@ -214,7 +214,7 @@ layer_markup = f"""
 """
 st.markdown(layer_markup, unsafe_allow_html=True)
 
-# 7. Action Processing Layer Input (Side-by-Side Under the Frame)
+# 7. Action Processing Layer Input (Perfect Edge-to-Edge Alignment)
 available_choices = list(current_node["choices"])
 
 if "power_choices" in current_node:
@@ -222,10 +222,11 @@ if "power_choices" in current_node:
         if p_choice["requires_power"] in st.session_state.powers:
             available_choices.append(p_choice)
 
+# This wrapper forces the columns to stretch exactly to the edges of your 56% display footprint
 st.markdown('<div class="actions-block">', unsafe_allow_html=True)
 
 if available_choices:
-    # Dynamically generate equal-width columns matching the number of available choices
+    # Generates equal-width column segments across the display block width
     cols = st.columns(len(available_choices))
     
     for index, choice in enumerate(available_choices):
@@ -234,7 +235,7 @@ if available_choices:
             if "requires_power" in choice:
                 label = f"👁️ {label}"
                 
-            # Renders individual buttons side-by-side, bounded inside the 56% wide action block
+            # use_container_width=True forces each button to expand to the full width of its column
             if st.button(label, key=f"act_{index}", use_container_width=True):
                 st.session_state.scene = choice["next"]
                 st.session_state.curse = min(100, st.session_state.curse + choice["curse"])
