@@ -119,10 +119,9 @@ slots = {
     "b1": render_slot("B1", 11), "b2": render_slot("B2", 12), "b3": render_slot("B3", 13), "b4": render_slot("B4", 14), "b5": render_slot("B5", 15)
 }
 
-# 5. Inject Custom Structural Layout Layout & CSS UI Engine
+# 5. Inject Clean Structural Grid Layout CSS
 custom_css = """
 <style>
-    /* Centers the overall visual novel container on screen */
     .game-wrapper {
         display: flex;
         justify-content: center;
@@ -131,21 +130,17 @@ custom_css = """
         max-width: 1000px;
         padding-top: 10px;
     }
-
-    /* 7x5 Grid Matrix Layout targeting your requested side counts */
     .game-grid-container {
         display: grid;
-        grid-template-columns: repeat(7, auto);
+        grid-template-columns: repeat(7, 60px); /* Strict element widths */
+        grid-template-rows: repeat(5, 90px);   /* Strict element heights */
         grid-gap: 12px;
         background-color: #060708;
         padding: 24px;
         border-radius: 14px;
         border: 1px solid #1a1f26;
-        align-items: center;
         justify-content: center;
     }
-
-    /* Custom 2" width by 3" height visual ratio styling per block */
     .glyph-slot {
         display: flex;
         align-items: center;
@@ -154,7 +149,6 @@ custom_css = """
         height: 90px;
         font-size: 2.2rem;
         border-radius: 6px;
-        transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
     }
     .empty-slot {
         border: 2px dashed #1e222b;
@@ -165,10 +159,7 @@ custom_css = """
         background-color: #1f0707;
         color: #ff453a;
         text-shadow: 0px 0px 10px #ff453a;
-        box-shadow: inset 0 0 12px rgba(255,69,58,0.15);
     }
-
-    /* Central Viewport Screen encompassing the 5x3 internal zone */
     .viewport-screen {
         grid-column: 2 / 7;
         grid-row: 2 / 5;
@@ -177,24 +168,25 @@ custom_css = """
         border-radius: 8px;
         padding: 20px;
         color: #f1f5f9;
-        width: 600px;
-        height: 410px;
         display: flex;
         flex-direction: column;
         justify-content: space-between;
+        width: 100%;
+        height: 100%;
+        box-sizing: border-box;
     }
     .viewport-screen img {
         width: 100%; 
         border-radius: 6px; 
-        height: 240px; 
+        height: 160px; 
         object-fit: cover; 
         border-bottom: 2px solid #232731;
         filter: grayscale(100%) contrast(140%) brightness(80%);
     }
     .vn-text {
-        font-size: 1.1rem;
-        line-height: 1.5;
-        margin-top: 10px;
+        font-size: 1rem;
+        line-height: 1.4;
+        margin-top: 8px;
         overflow-y: auto;
     }
 </style>
@@ -204,14 +196,16 @@ st.markdown(custom_css, unsafe_allow_html=True)
 # 6. Render Structural Frame Structure 
 current_node = STORY.get(st.session_state.scene, STORY["entrance"])
 
-# Grid coordinates mapping the 7 columns explicitly to retain empty corner spaces
+# Every grid cell is now explicitly wrapped in valid HTML elements to prevent layout collapses
 grid_html = f"""
 <div class="game-wrapper">
     <div class="game-grid-container">
-        <!-- Row 1: Top Border Frame (5 across, padded by empty corners) -->
-        <div></div> {slots['t1']} {slots['t2']} {slots['t3']} {slots['t4']} {slots['t5']} <div></div>
+        <!-- Row 1 -->
+        <div class="corner-space"></div>
+        {slots['t1']} {slots['t2']} {slots['t3']} {slots['t4']} {slots['t5']}
+        <div class="corner-space"></div>
         
-        <!-- Row 2: Contains Left Wall Slot 1, Viewport View Screen, and Right Wall Slot 1 -->
+        <!-- Row 2 -->
         {slots['l1']}
         <div class="viewport-screen">
             <img src="{current_node['image']}">
@@ -219,14 +213,23 @@ grid_html = f"""
         </div>
         {slots['r1']}
         
-        <!-- Row 3: Left Wall Center (L2) and Right Wall Center (R2) -->
-        {slots['l2']} {slots['r2']}
+        <!-- Row 3 -->
+        {slots['l2']}
+        <!-- Hidden underlying spacer to let the viewport take control of middle tracks -->
+        <div style="grid-column: 2 / 7; grid-row: 3 / 4; pointer-events: none;"></div>
+        {slots['r2']}
         
-        <!-- Row 4: Left Wall Bottom (L3) and Right Wall Bottom (R3) -->
-        {slots['l3']} {slots['r3']}
+        <!-- Row 4 -->
+        {slots['l3']}
+        <div style="grid-column: 2 / 7; grid-row: 4 / 5; pointer-events: none;"></div>
+        {slots['r3']}
         
-        <!-- Row 5: Bottom Border Frame (5 across, padded by empty corners) -->
-        <div></div> {slots['b1']} {slots['b2']} {slots['b3']} {slots['b4']} {slots['b5']} <div></div>
+        <!-- Row 5 -->
+        <div class="corner-space"></div>
+        {slots['b1']} {slots['b2']} {slots['b3']} {slots['b4']} {slots['b5']}
+        <div class="corner-space"></div>
     </div>
 </div>
 """
+st.markdown(grid_html, unsafe_allow_html=True)
+st.write(" ") 
